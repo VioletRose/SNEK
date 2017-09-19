@@ -1,0 +1,16 @@
+body {
+	background-color: Black;
+	margin: 0;
+}
+
+main {
+	background-color: White;
+	margin: auto;
+	max-width: 512px;
+	padding: 1px 0 5px;
+	text-align: center;
+}
+
+#snekCanvas {
+	max-width: 100%;
+}
