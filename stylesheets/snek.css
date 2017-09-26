@@ -1,16 +1,114 @@
+/*The font Open Sans by Steve Matteson is distributed under the Apache 2.0 license, a copy of which has been included in the file's directory.*/
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	src: url(../fonts/open-sans.woff2) format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
+
 body {
-	background-color: Black;
+	background-color: #F5F5F5;
+	font-size: 0;
 	margin: 0;
 }
 
-main {
+p {
+	font-size: medium;
+	margin: 0;
+	padding: 16px;
+}
+
+section {
+	display: block;
+	width: 100%;
+}
+
+#gameCanvas {
+	max-width: 100%;
+}
+
+#gameContainer {
 	background-color: White;
+	box-shadow: 0 2px 2px 0 DarkGray;
+	display: block;
+	font-family: 'Open Sans', sans-serif;
 	margin: auto;
 	max-width: 512px;
-	padding: 1px 0 5px;
 	text-align: center;
 }
 
-#snekCanvas {
-	max-width: 100%;
+@media screen and (min-height: 805px) {
+	body {
+		height: 100vh;
+		overflow: hidden;
+	}
+	#gameContainer {
+		left: 50vw;
+		position: absolute;
+		top: 50vh;
+		-ms-transform: translate(-50%, -50%);
+		-webkit-transform: translate(-50%, -50%);
+		transform: translate(-50%, -50%);
+		width: 100%;
+	}
+}
+
+#gameTitle {
+	background-color: #FBC02D;
+	box-shadow: 0 2px 5px 0 DarkGray;
+	font-size: x-large;
+	margin: 0;
+	padding: 20px 0;
+}
+
+#pauseButton {
+	background-color: #FBC02D;
+	border-radius: 50%;
+	box-shadow: 0 4px 8px 0 DarkGray;
+	opacity: 0.4;
+	padding: 18px;
+	position: absolute;
+	right: 16px;
+	top: 14px;
+	transition: 250ms;
+}
+
+@media screen and (max-width: 511px) {
+	#pauseButton {
+		padding: 10px;
+	}
+}
+
+#pauseButton.active {
+	opacity: 1;
+}
+
+#pauseButton.active:hover {
+	background-color: #FBC746;
+}
+
+#pauseButton.pressed {
+	background-color: #FBCE5F;
+	box-shadow: 0 6px 22px 4px DarkGray;
+}
+
+#pauseButton.pressed:hover {
+	background-color: #FBD578;
+}
+
+#playIcon {
+	display: none;
+}
+
+.pressed > #pauseIcon {
+	display: none;
+}
+
+.pressed > #playIcon {
+	display: inline;
+}
+
+#scoreboard {
+	position: relative;
 }

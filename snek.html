@@ -5,25 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SNEK</title>
 <link rel="stylesheet" type="text/css" href="./stylesheets/snek.css">
+<script src="./scripts/classlist-polyfill.js"></script>
+<script src="./scripts/includes-polyfill.js"></script>
+<script src="./scripts/requestanimationframe-polyfill.js"></script>
+<!--The API Font Face Observer by Bram Stein is distributed under the BSD 2-Clause license, a copy of which has been included in the file's directory.-->
+<script src="./scripts/fontfaceobserver.js"></script>
 <script src="./scripts/snek.js"></script>
 </head>
 <body>
-<main>
+<main id="gameContainer">
 	<section>
-		<h1>SNEK</h1>
-		<p>Guide your snek with the arrow keys on the keyboard or by clicking the up/right/down/left quadrants of the game area to collect pellets and become longer, but don't run into your own body or you'll have to start over!</p>
+		<h1 id="gameTitle">SNEK</h1>
+		<p>Guide your SNEK with the arrow keys or by tapping the up/right/down/left quadrants of the game area. Collect pellets to become longer, but don't run into your own body!</p>
 	</section>
 	<section>
-		<canvas id="snekCanvas" height="512" width="512" tabindex="0">If you are seeing this message, your browser does not support the <code>&lt;canvas&gt;</code> element.</canvas>
+		<canvas id="gameCanvas" height="512" width="512" tabindex="0">If you are seeing this message, your browser does not support the <code>&lt;canvas&gt;</code> element.</canvas>
 	</section>
-	<section>
-		Pause/Unpause Game: <img id="pauseButton" src="./images/pausebutton.png">
+	<section id="scoreboard">
+		<div id="pauseButton">
+			<img id="pauseIcon" width="20" height="20" src="./images/pauseicon.gif">
+			<img id="playIcon" width="20" height="20" src="./images/playicon.png">
+		</div>
+		<p>Speed Increase: <span id="speedIncreaseDisplay">0</span>x
 		<br>
 		High Score: <span id="highScoreDisplay">0</span> Pellets
 		<br>
 		Current Score: <span id="currentScoreDisplay">0</span> Pellets
 		<br>
-		Time Played: <span id="timePlayedDisplay">0</span> Seconds
+		Time Played: <span id="timePlayedDisplay">0 Seconds</span></p>
 	</section>
 </main>
 </body>

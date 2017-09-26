@@ -1,17 +1,22 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
 	//Defining the game's static variables that will never be changed during gameplay.
-	var canvas = document.getElementById('snekCanvas');
-	var ctx = canvas.getContext('2d');
+	var canvas = document.getElementById("gameCanvas");
+	var ctx = canvas.getContext("2d");
+	var font = new FontFaceObserver("Open Sans", {style:"normal", weight:400});
+	ctx.font = "bold xx-large Open Sans, sans-serif";
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	
+	var dimmerColor = "rgba(0, 0, 0, 0.4)";
+	var textColor = "#FBC02D";
 	
 	var images = {};
 	var doneImages = 0;
 	var clockwiseCornerBodyImg;
 	var cornerBodyImg;
-	var gameOverImg;
 	var grassImg;
 	var headImg;
 	var pelletImg;
-	var pregameImg;
 	var straightBodyImg;
 	
 	var tileWidth = 32;
@@ -19,39 +24,42 @@ document.addEventListener('DOMContentLoaded', function() {
 	var gridWidth = 16;
 	var gridHeight = 16;
 	
-	var headCanvas = document.createElement('canvas');
+	var baseSpeed = 4;
+	
+	var headCanvas = document.createElement("canvas");
 	headCanvas.width = tileWidth;
 	headCanvas.height = tileHeight;
-	var headCtx = headCanvas.getContext('2d');
+	var headCtx = headCanvas.getContext("2d");
 	
-	var bodyCanvas = document.createElement('canvas');
+	var bodyCanvas = document.createElement("canvas");
 	bodyCanvas.width = tileWidth;
 	bodyCanvas.height = tileHeight;
-	var bodyCtx = bodyCanvas.getContext('2d');
+	var bodyCtx = bodyCanvas.getContext("2d");
 	
-	var pauseButton = document.getElementById('pauseButton');
-	var highScoreDisplay = document.getElementById('highScoreDisplay');
-	var currentScoreDisplay = document.getElementById('currentScoreDisplay');
-	var timePlayedDisplay = document.getElementById('timePlayedDisplay');
+	var pauseButton = document.getElementById("pauseButton");
+	var pauseIcon = document.getElementById("pauseIcon");
+	var speedIncreaseDisplay = document.getElementById("speedIncreaseDisplay");
+	var highScoreDisplay = document.getElementById("highScoreDisplay");
+	var currentScoreDisplay = document.getElementById("currentScoreDisplay");
+	var timePlayedDisplay = document.getElementById("timePlayedDisplay");
 	
 	//Defining the game's variables which may change during gameplay.
-	
-	var framesPerSecond;
+	var speedIncrease;
 	
 	var gameOver;
 	var gamePaused;
 
-	var playerX;
-	var playerY;
-	var playerDir;
+	var playerX = 8;
+	var playerY = 0;
+	var playerDir = 2;
 	var playerInputDir;
 	var playerLastDir;
 		
 	var playerLength;
-	var snekBody;
+	var snekBody = [];
 		
-	var pelletX;
-	var pelletY;
+	var pelletX = 8;
+	var pelletY = 1;
 
 	var highScore;
 	var timeStarted;
@@ -59,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	function renderFrame() {
 		//This function contains all the logic for actually rendering the game to the canvas.
-		if(gamePaused == true) {
+		if(gamePaused) {
 			return;
 		}
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -114,8 +122,29 @@ document.addEventListener('DOMContentLoaded', function() {
 			ctx.drawImage(bodyCanvas, 0, 0, 32, 32, pieceIndex.x*tileWidth, pieceIndex.y*tileHeight, tileWidth, tileHeight);
 		}
 
-		if(gameOver == true) {
-			ctx.drawImage(gameOverImg, 0, 0, 512, 512);
+		if(gameOver) {
+			ctx.fillStyle = dimmerColor;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = textColor;
+			ctx.fillText("Game Over\u2026", Math.floor(canvas.width / 2), Math.floor(canvas.height / 2) - 20);
+			ctx.fillText("Click here to play again!", Math.floor(canvas.width / 2), Math.floor(canvas.height / 2) + 20);
+			canvas.addEventListener("click", startGame);
+			return;
+		}
+		else if(gameOver === undefined) {
+			ctx.fillStyle = dimmerColor;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = textColor;
+			
+			//Defining a function to render text and attach the event listener which allows the game to be started.
+			function allowStart() {
+				ctx.fillText("Click here to start playing!", Math.floor(canvas.width / 2), Math.floor(canvas.height / 2));
+				canvas.addEventListener("click", startGame);
+			}
+			
+			//Checking if this is Internet Explorer and loading immediately if it is (since it can't read the woff2 font), else checking if the font is ready before continuing.
+			if(/MSIE 9/i.test(navigator.userAgent) || /MSIE 10/i.test(navigator.userAgent) || /rv:11.0/i.test(navigator.userAgent)) allowStart();
+			else font.load().then(allowStart, allowStart);
 			return;
 		}
 
@@ -201,10 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 		
 		if(playerX == pelletX && playerY == pelletY) {
-			playerLength++
-			framesPerSecond = framesPerSecond + 0.25
-			console.log(framesPerSecond);
+			playerLength++;
+			speedIncrease += 0.25;
 			currentScoreDisplay.innerHTML = playerLength;
+			speedIncreaseDisplay.innerHTML = speedIncrease;
 			if(playerLength > highScore) {
 				highScore = playerLength;
 				highScoreDisplay.innerHTML = highScore;
@@ -226,15 +255,15 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		if(snekBody.some(gameOverCheck)) {
 			gameOver = true;
-			canvas.removeEventListener('keydown', keyboardControls);
-			canvas.removeEventListener('click', clickControls);
-			pauseButton.removeEventListener('click', pauseUnpause);
+			canvas.removeEventListener("keydown", keyboardControls);
+			canvas.removeEventListener("click", clickControls);
+			pauseButton.removeEventListener("click", pauseUnpause);
+			pauseButton.classList.remove("active");
 			document.cookie = "highscore=" + highScore + "; expires=Tue, 19 Jan 2038 03:14:06 UTC";
-			canvas.addEventListener('click', startGame);
 			return;
 		}
 		
-		setTimeout(updateFrame, 1000 / framesPerSecond);
+		setTimeout(updateFrame, 1000 / (baseSpeed + speedIncrease));
 	}
 	
 	//Defining functions used to attach event listeners to detect user mouse/keyboard input, as well as use of the pause button.
@@ -336,13 +365,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	function pauseUnpause() {
 		if(gamePaused == false) {
 			gamePaused = true;
-			pauseButton.src = "./images/playbutton.png";
+			pauseButton.classList.add("pressed");
 		}
 		else if(gamePaused == true) {
 			gamePaused = false;
 			renderFrame();
 			updateFrame();
-			pauseButton.src = "./images/pausebutton.png";
+			pauseButton.classList.remove("pressed");
 			canvas.focus();
 		}
 	}
@@ -350,16 +379,16 @@ document.addEventListener('DOMContentLoaded', function() {
 	function startGame() {
 		//The function called to set up the game's starting conditions and begin gameplay.
 		//Removing the game startup event listener.
-		canvas.removeEventListener('click', startGame);
+		canvas.removeEventListener("click", startGame);
 		
-		//Defining variables related to the current state of gameplay.
-		framesPerSecond = 4;
+		//Setting variables related to the current state of gameplay.
+		speedIncrease = 0;
 		
 		gameOver = false;
 		gamePaused = false;
 
 		playerX = 8;
-		playerY = 1;
+		playerY = 0;
 		playerDir = 2;
 		playerInputDir = [2];
 		playerLastDir = 2;
@@ -368,23 +397,25 @@ document.addEventListener('DOMContentLoaded', function() {
 		snekBody = [];
 		
 		pelletX = 8;
-		pelletY = 2;
+		pelletY = 1;
 		
 		timeStarted = Date.now();
 		timePlayed = 0;
 		
 		//Attaching event listeners to detect keyboard and mouse/touch controls.
-		canvas.addEventListener('keydown', keyboardControls);
-		canvas.addEventListener('click', clickControls);
+		canvas.addEventListener("keydown", keyboardControls);
+		canvas.addEventListener("click", clickControls);
 
 		//Starting the game's render and update loops.
 		renderFrame();
 		updateFrame();
 		
-		//Adding the event listener to the pause/unpause button.
-		pauseButton.addEventListener('click', pauseUnpause);
+		//Adding the event listener and active class to the pause/unpause button.
+		pauseButton.addEventListener("click", pauseUnpause);
+		pauseButton.classList.add("active");
 		
 		//Resetting the scoreboard.
+		speedIncreaseDisplay.innerHTML = speedIncrease;
 		currentScoreDisplay.innerHTML = playerLength;
 		timePlayedDisplay.innerHTML = Math.floor(timePlayed);
 	}
@@ -392,14 +423,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	function initImages() {
 		//This function loads game images into memory and prepares the canvas for the game to start.
 		var loadThese = [
-			'./images/clockwisecornerbody.png',
-			'./images/cornerbody.png',
-			'./images/gameover.png',
-			'./images/grass.png',
-			'./images/head.png',
-			'./images/pellet.png',
-			'./images/pregame.png',
-			'./images/straightbody.png'
+			"./images/clockwisecornerbody.png",
+			"./images/cornerbody.png",
+			"./images/grass.gif",
+			"./images/head.png",
+			"./images/pellet.png",
+			"./images/straightbody.png"
 		];
 		
 		for(var i = 0, l = loadThese.length; i < l; i++) {
@@ -409,18 +438,15 @@ document.addEventListener('DOMContentLoaded', function() {
 				doneImages++;
 				if(doneImages == l) {
 					//Now that the images are loaded, assign them to variables so they're easier to reference later.
-					clockwiseCornerBodyImg = images['./images/clockwisecornerbody.png'];
-					cornerBodyImg = images['./images/cornerbody.png'];
-					gameOverImg = images['./images/gameover.png'];
-					grassImg = images['./images/grass.png'];
-					headImg = images['./images/head.png'];
-					pelletImg = images['./images/pellet.png'];
-					pregameImg = images['./images/pregame.png'];
-					straightBodyImg = images['./images/straightbody.png'];
+					clockwiseCornerBodyImg = images["./images/clockwisecornerbody.png"];
+					cornerBodyImg = images["./images/cornerbody.png"];
+					grassImg = images["./images/grass.gif"];
+					headImg = images["./images/head.png"];
+					pelletImg = images["./images/pellet.png"];
+					straightBodyImg = images["./images/straightbody.png"];
 					
-					//Render the pregame placeholder image to the canvas and add the event listener that detects the user attempting to touch/click to start the game.
-					ctx.drawImage(pregameImg, 0, 0, 512, 512);
-					canvas.addEventListener('click', startGame);
+					//Render the pregame state to the canvas.
+					requestAnimationFrame(renderFrame);
 				}
 			};
 			image.originalName = loadThese[i];
@@ -430,20 +456,17 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	function cookieCheck() {
 		//Checks for the presence of a high score cookie in the user's browser, and sets the high score accordingly if there is one.
-		if(document.cookie.includes('highscore=')) {
+		if(document.cookie.includes("highscore=")) {
 			var splitCookie = document.cookie.split(';');
 
 			function scoreFinder(entry) {
-				if(entry.includes('highscore=')) {
-					return true;
-				}
-				else {
-					return false;
+				if(entry.includes("highscore=")) {
+					highScore = entry.split('=')[1];
+					return;
 				}
 			}
-			
-			var scoreCookie = splitCookie.find(scoreFinder).split('=');
-			highScore = scoreCookie[1];
+
+			splitCookie.forEach(scoreFinder);
 			highScoreDisplay.innerHTML = highScore;
 		}
 		else {
